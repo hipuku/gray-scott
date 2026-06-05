@@ -1,0 +1,30 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../node_modules/kern/src/tokens.css";
+@source "../node_modules/kern/src";
+
+/* ── gray-scott semantic overrides ──────────────────────────────────────── */
+:root {
+  --background: var(--color-void-0);
+  --foreground: var(--color-void-90);
+  --primary:    var(--color-pulsar);
+  --ring:       var(--color-pulsar);
+  --link:       var(--color-quasar);
+}
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-size: var(--text-p-sm);
+    font-weight: var(--text-p-sm-weight);
+    line-height: var(--text-p-sm-lh);
+    letter-spacing: var(--text-p-sm-tracking);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
