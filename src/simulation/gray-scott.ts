@@ -110,7 +110,7 @@ function buildLut(fromHex: string, toHex: string): Uint8Array {
 
 // void-0 → pulsar  (V channel default, U channel)
 const LUT_PULSAR = buildLut('#121213', '#7193ED')
-// void-0 → corona  (V channel in Isolate / Sweep view)
+// void-0 → corona  (V channel in Isolate view)
 const LUT_CORONA  = buildLut('#121213', '#F9C3D6')
 
 // ─── Buffers ──────────────────────────────────────────────────────────────────

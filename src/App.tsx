@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Info, Waves, Grid3x3, LayoutGrid, Globe, Columns2 } from 'lucide-react'
+import { Info, Waves, Grid3x3, Globe, Columns2 } from 'lucide-react'
 import { AppSidebar }    from '@kern/organisms/AppSidebar'
 import { HipukuLogo }    from '@kern/organisms/HipukuLogo'
 import { ErrorBoundary } from '@kern/organisms/ErrorBoundary'
@@ -7,7 +7,6 @@ import { GitHubIcon }    from '@kern/atoms/GitHubIcon'
 import { ViewAbout }   from '@/components/ViewAbout'
 import { ViewSimulate } from '@/components/ViewSimulate'
 import { ViewSpace }   from '@/components/ViewSpace'
-import { ViewSweep }   from '@/components/ViewSweep'
 import { ViewIsolate } from '@/components/ViewIsolate'
 import type { ViewId } from './types'
 
@@ -16,7 +15,6 @@ const NAV_ITEMS = [
   { id: 'simulate', label: 'Simulate',           icon: Waves      },
   { id: 'isolate',  label: 'Channels',           icon: Columns2   },
   { id: 'space',    label: 'Parameter space',    icon: Grid3x3    },
-  { id: 'sweep',    label: 'Phase sweep',        icon: LayoutGrid },
 ]
 
 const SOCIAL_LINKS = [
@@ -34,7 +32,7 @@ export default function App() {
   const [activeView, setActiveView] = useState<ViewId>('about')
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  // Jump params: ViewSweep tells App which (f,k) to send to ViewSimulate.
+  // Jump params: ViewSpace tells App which (f,k) to send to ViewSimulate.
   // We store them here and ViewSimulate reads them on mount via a key reset.
   const [jumpParams, setJumpParams] = useState<{ f: number; k: number } | null>(null)
 
@@ -74,7 +72,6 @@ export default function App() {
         )}
         {activeView === 'isolate'  && <ViewIsolate  />}
         {activeView === 'space'    && <ViewSpace    onJumpToParams={handleJumpToParams} />}
-        {activeView === 'sweep'    && <ViewSweep    onJumpToParams={handleJumpToParams} />}
       </main>
     </div>
     </ErrorBoundary>

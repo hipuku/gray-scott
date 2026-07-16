@@ -1,1 +1,1 @@
-export type ViewId = 'about' | 'simulate' | 'space' | 'sweep' | 'isolate'
+export type ViewId = 'about' | 'simulate' | 'space' | 'isolate'
