@@ -7,9 +7,9 @@
 :root {
   --background: var(--color-void-0);
   --foreground: var(--color-void-90);
-  --primary:    var(--color-pulsar);
-  --ring:       var(--color-pulsar);
-  --link:       var(--color-quasar);
+  --primary:    var(--color-nebula);
+  --ring:       var(--color-nebula);
+  --link:       var(--color-supernova);
 }
 
 @layer base {

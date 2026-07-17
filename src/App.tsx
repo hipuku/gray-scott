@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Info, Waves, Grid3x3, Globe, Columns2 } from 'lucide-react'
 import { AppSidebar }    from '@kern/organisms/AppSidebar'
 import { HipukuLogo }    from '@kern/organisms/HipukuLogo'
@@ -23,23 +23,14 @@ const SOCIAL_LINKS = [
 ]
 
 const LOGO_FILLS = {
-  hi: 'var(--color-pulsar)',
-  pu: 'var(--color-quasar)',
-  ku: 'var(--color-corona)',
+  hi: 'var(--color-nebula)',
+  pu: 'var(--color-supernova)',
+  ku: 'var(--color-solstice)',
 }
 
 export default function App() {
   const [activeView, setActiveView] = useState<ViewId>('about')
   const [mobileOpen, setMobileOpen] = useState(false)
-
-  // Jump params: ViewSpace tells App which (f,k) to send to ViewSimulate.
-  // We store them here and ViewSimulate reads them on mount via a key reset.
-  const [jumpParams, setJumpParams] = useState<{ f: number; k: number } | null>(null)
-
-  const handleJumpToParams = useCallback((f: number, k: number) => {
-    setJumpParams({ f, k })
-    setActiveView('simulate')
-  }, [])
 
   return (
     <ErrorBoundary>
@@ -49,7 +40,7 @@ export default function App() {
         navItems={NAV_ITEMS}
         activeId={activeView}
         onNavigate={(id) => setActiveView(id as ViewId)}
-        accentActiveClass="text-pulsar"
+        accentActiveClass="text-nebula"
         socialLinks={SOCIAL_LINKS}
         mobileOpen={mobileOpen}
         onMobileToggle={() => setMobileOpen(o => !o)}
@@ -63,15 +54,9 @@ export default function App() {
 
       <main className="flex-1 h-full overflow-y-auto p-10">
         {activeView === 'about'    && <ViewAbout    />}
-        {activeView === 'simulate' && (
-          <ViewSimulate
-            key={jumpParams ? `${jumpParams.f}-${jumpParams.k}` : 'default'}
-            initialF={jumpParams?.f}
-            initialK={jumpParams?.k}
-          />
-        )}
+        {activeView === 'simulate' && <ViewSimulate />}
         {activeView === 'isolate'  && <ViewIsolate  />}
-        {activeView === 'space'    && <ViewSpace    onJumpToParams={handleJumpToParams} />}
+        {activeView === 'space'    && <ViewSpace    />}
       </main>
     </div>
     </ErrorBoundary>

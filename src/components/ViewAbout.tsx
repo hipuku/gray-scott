@@ -24,20 +24,20 @@ export function ViewAbout() {
       {/* ── The equations ── */}
       <Section title="The equations">
         <div className="rounded-xl px-6 py-5 bg-void-20 border border-void-30 flex flex-col gap-2">
-          <code className="type-code text-void-70">∂U/∂t = D<sub>u</sub>∇²U − UV² + f(1 − U)</code>
-          <code className="type-code text-void-70">∂V/∂t = D<sub>v</sub>∇²V + UV² − (f + k)V</code>
+          <code className="type-code text-void-70">∂<span className="text-nebula">U</span>/∂t = <span className="text-nebula">D<sub>u</sub></span>∇²<span className="text-nebula">U</span> − UV² + <span className="text-nebula">f</span>(1 − <span className="text-nebula">U</span>)</code>
+          <code className="type-code text-void-70">∂<span className="text-supernova">V</span>/∂t = <span className="text-supernova">D<sub>v</sub></span>∇²<span className="text-supernova">V</span> + UV² − (<span className="text-nebula">f</span> + <span className="text-supernova">k</span>)<span className="text-supernova">V</span></code>
         </div>
         <ul className="flex flex-col gap-3 list-none p-0 m-0">
           <BulletItem>
-            <InlineCode color="text-pulsar">D<sub>u</sub></InlineCode> and{' '}
-            <InlineCode color="text-corona">D<sub>v</sub></InlineCode> are the diffusion coefficients, how fast each chemical spreads. U diffuses roughly twice as fast as V.
+            <InlineCode color="text-nebula">D<sub>u</sub></InlineCode> and{' '}
+            <InlineCode color="text-supernova">D<sub>v</sub></InlineCode> are the diffusion coefficients, how fast each chemical spreads. U diffuses roughly twice as fast as V.
           </BulletItem>
           <BulletItem>
-            <InlineCode color="text-pulsar">f</InlineCode> is the feed rate, how quickly U is
+            <InlineCode color="text-nebula">f</InlineCode> is the feed rate, how quickly U is
             replenished from an external reservoir. Higher f keeps U well-supplied.
           </BulletItem>
           <BulletItem>
-            <InlineCode color="text-corona">k</InlineCode> is the kill rate, how quickly V is
+            <InlineCode color="text-supernova">k</InlineCode> is the kill rate, how quickly V is
             removed. Together, f and k determine which pattern class emerges.
           </BulletItem>
           <BulletItem>
@@ -52,7 +52,7 @@ export function ViewAbout() {
         <ul className="flex flex-col gap-3 list-none p-0 m-0">
           <BulletItem>
             The simulation runs on a <strong className="text-void-80 font-semibold">512 × 512 grid</strong> — 262,144 pixels updated every frame — using two interleaved{' '}
-            <InlineCode color="text-pulsar">Float32Array</InlineCode> ping-pong buffers. One buffer
+            <InlineCode color="text-void-60">Float32Array</InlineCode> ping-pong buffers. One buffer
             is read, the other is written, then they swap.
           </BulletItem>
           <BulletItem>
@@ -68,13 +68,13 @@ export function ViewAbout() {
           <BulletItem>
             Each frame is rendered in a <strong className="text-void-80 font-semibold">Web Worker</strong> — the
             simulation step and colour mapping run entirely off the main thread. The worker posts back a transferable{' '}
-            <InlineCode color="text-pulsar">ArrayBuffer</InlineCode>; the main thread wraps it in{' '}
+            <InlineCode color="text-void-60">ArrayBuffer</InlineCode>; the main thread wraps it in{' '}
             <InlineCode color="text-void-60">ImageData</InlineCode> and commits to canvas via{' '}
             <InlineCode color="text-void-60">putImageData</InlineCode>, keeping the UI thread free at all speeds.
           </BulletItem>
           <BulletItem>
             Colour mapping uses <strong className="text-void-80 font-semibold">OKLCH interpolation</strong> — a
-            perceptually uniform path from void-0 to pulsar. A 256-entry lookup table is precomputed at module
+            perceptually uniform path from void-0 (near-black) to nebula green. A 256-entry lookup table is precomputed at module
             load so the per-pixel render is a single array read, not a float calculation.
           </BulletItem>
         </ul>
@@ -88,12 +88,12 @@ export function ViewAbout() {
         </p>
         <ul className="flex flex-col gap-3 list-none p-0 m-0">
           <BulletItem>
-            <InlineCode color="text-pulsar">U</InlineCode> starts at 1 everywhere (full concentration).
+            <InlineCode color="text-nebula">U</InlineCode> starts at 1 everywhere (full concentration).
             Where V is present, U is consumed by the autocatalytic reaction UV². High U means the activator
             has not yet reached that region.
           </BulletItem>
           <BulletItem>
-            <InlineCode color="text-corona">V</InlineCode> begins near zero and is produced wherever U is
+            <InlineCode color="text-supernova">V</InlineCode> begins near zero and is produced wherever U is
             present. It diffuses more slowly than U (D<sub>v</sub> ≈ 0.5 × D<sub>u</sub>) — this slower
             spread is what creates the spatial instability. If V diffused as fast as U, the system would
             equilibrate uniformly and no pattern would form.

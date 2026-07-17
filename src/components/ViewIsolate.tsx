@@ -1,31 +1,79 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Pause, Play, RotateCcw } from 'lucide-react'
 import { ViewHeader } from '@kern/molecules/ViewHeader'
 import { CalloutCard } from '@kern/molecules/CalloutCard'
 import { ToggleChip } from '@kern/atoms/ToggleChip'
-import { useState } from 'react'
+import { IconButton } from '@kern/atoms/IconButton'
+import { PatternGlyph } from '@/components/PatternGlyph'
 import { PRESETS } from '@/simulation/presets'
-import { GRID_SIZE, DEFAULT_PARAMS } from '@/simulation/gray-scott'
-import type { SimParams } from '@/simulation/types'
+import {
+  GRID_SIZE, DEFAULT_PARAMS,
+  renderU, renderVSupernova,
+} from '@/simulation/gray-scott'
+import type { SimParams, SimBuffer } from '@/simulation/types'
+
+interface Cell { gx: number; gy: number }
+
+// Small crosshair marker overlaid on a canvas at a grid cell. Drawn on both panels
+// at the same cell so the eye can see U is dark exactly where V is bright.
+function Crosshair({ cell }: { cell: Cell }) {
+  return (
+    <div
+      className="absolute pointer-events-none w-3 h-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-void-90"
+      style={{
+        left: `${((cell.gx + 0.5) / GRID_SIZE) * 100}%`,
+        top:  `${((cell.gy + 0.5) / GRID_SIZE) * 100}%`,
+        boxShadow: '0 0 0 1.5px var(--color-void-0)',
+      }}
+    />
+  )
+}
 
 export function ViewIsolate() {
   const canvasURef = useRef<HTMLCanvasElement>(null)
   const canvasVRef = useRef<HTMLCanvasElement>(null)
   const workerRef  = useRef<Worker | null>(null)
   const rafRef     = useRef<number>(0)
-  const ctxURef    = useRef<CanvasRenderingContext2D | null>(null)
-  const ctxVRef    = useRef<CanvasRenderingContext2D | null>(null)
+
+  const ctxURef = useRef<CanvasRenderingContext2D | null>(null)
+  const ctxVRef = useRef<CanvasRenderingContext2D | null>(null)
+  const imgURef = useRef<ImageData | null>(null)
+  const imgVRef = useRef<ImageData | null>(null)
+
+  // Latest raw concentration fields, kept for the cursor inspector.
+  const uFieldRef = useRef<Float32Array | null>(null)
+  const vFieldRef = useRef<Float32Array | null>(null)
 
   const [activePreset, setActivePreset] = useState(PRESETS[0].id)
+  const [running, setRunning] = useState(true)
+  const runningRef = useRef(true)
+  const pumpingRef = useRef(false)   // is a tick currently in flight?
 
+  const [hover, setHover]     = useState<Cell | null>(null)
+  const hoverRef              = useRef<Cell | null>(null)
+  const [readout, setReadout] = useState<{ u: number; v: number } | null>(null)
+
+  useEffect(() => { hoverRef.current = hover }, [hover])
+
+  function sampleAt(gx: number, gy: number) {
+    const u = uFieldRef.current, v = vFieldRef.current
+    if (!u || !v) return
+    const idx = gy * GRID_SIZE + gx
+    setReadout({ u: u[idx], v: v[idx] })
+  }
+
+  // ── Worker + main-thread render loop ─────────────────────────────────────────
   useEffect(() => {
-    const cu = canvasURef.current
-    const cv = canvasVRef.current
+    const cu = canvasURef.current, cv = canvasVRef.current
     if (!cu || !cv) return
 
     cu.width = cv.width = GRID_SIZE
     cu.height = cv.height = GRID_SIZE
-    ctxURef.current = cu.getContext('2d')
-    ctxVRef.current = cv.getContext('2d')
+    const ctxU = cu.getContext('2d'), ctxV = cv.getContext('2d')
+    if (!ctxU || !ctxV) return
+    ctxURef.current = ctxU; ctxVRef.current = ctxV
+    imgURef.current = ctxU.createImageData(GRID_SIZE, GRID_SIZE)
+    imgVRef.current = ctxV.createImageData(GRID_SIZE, GRID_SIZE)
 
     const worker = new Worker(
       new URL('../simulation/isolate.worker.ts', import.meta.url),
@@ -37,40 +85,90 @@ export function ViewIsolate() {
       const { type, uBuffer, vBuffer } = e.data
       if (type !== 'frame') return
 
-      const uPixels = new Uint8ClampedArray(uBuffer)
-      const vPixels = new Uint8ClampedArray(vBuffer)
-      ctxURef.current?.putImageData(new ImageData(uPixels, GRID_SIZE, GRID_SIZE), 0, 0)
-      ctxVRef.current?.putImageData(new ImageData(vPixels, GRID_SIZE, GRID_SIZE), 0, 0)
+      const uField = new Float32Array(uBuffer)
+      const vField = new Float32Array(vBuffer)
+      uFieldRef.current = uField
+      vFieldRef.current = vField
 
-      rafRef.current = requestAnimationFrame(() => worker.postMessage({ type: 'tick' }))
+      const buf: SimBuffer = { U: uField, V: vField }
+      const imgU = imgURef.current!, imgV = imgVRef.current!
+      renderU(imgU, buf)
+      renderVSupernova(imgV, buf)
+      ctxURef.current!.putImageData(imgU, 0, 0)
+      ctxVRef.current!.putImageData(imgV, 0, 0)
+
+      // Keep the inspector live while the sim runs.
+      if (hoverRef.current) {
+        const { gx, gy } = hoverRef.current
+        const idx = gy * GRID_SIZE + gx
+        setReadout({ u: uField[idx], v: vField[idx] })
+      }
+
+      // Self-throttling request loop: only ask for the next frame once this one
+      // has painted, and only while running.
+      if (runningRef.current) {
+        rafRef.current = requestAnimationFrame(() => worker.postMessage({ type: 'tick' }))
+      } else {
+        pumpingRef.current = false
+      }
     }
-
-    rafRef.current = requestAnimationFrame(() => worker.postMessage({ type: 'tick' }))
 
     return () => {
       cancelAnimationFrame(rafRef.current)
       worker.terminate()
+      workerRef.current = null
+      pumpingRef.current = false
     }
   }, [])
 
+  // Start/restart the loop on mount and whenever we resume from a pause.
+  useEffect(() => {
+    runningRef.current = running
+    if (running && workerRef.current && !pumpingRef.current) {
+      pumpingRef.current = true
+      rafRef.current = requestAnimationFrame(() => workerRef.current!.postMessage({ type: 'tick' }))
+    }
+  }, [running])
+
+  // ── Handlers ─────────────────────────────────────────────────────────────────
   function handlePreset(id: string) {
     const preset = PRESETS.find(p => p.id === id)
     if (!preset) return
     setActivePreset(id)
     const params: SimParams = { ...DEFAULT_PARAMS, f: preset.f, k: preset.k }
     workerRef.current?.postMessage({ type: 'setParams', params })
+    workerRef.current?.postMessage({ type: 'seed' })   // worker posts a frame, so a paused view still updates
+  }
+
+  function handleReset() {
     workerRef.current?.postMessage({ type: 'seed' })
   }
+
+  function handleHover(e: React.MouseEvent<HTMLCanvasElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const gx = Math.max(0, Math.min(GRID_SIZE - 1, Math.floor((e.clientX - rect.left) / rect.width  * GRID_SIZE)))
+    const gy = Math.max(0, Math.min(GRID_SIZE - 1, Math.floor((e.clientY - rect.top)  / rect.height * GRID_SIZE)))
+    setHover({ gx, gy })
+    sampleAt(gx, gy)
+  }
+
+  function handleLeave() {
+    setHover(null)
+    setReadout(null)
+  }
+
+  const canvasClass = 'w-full h-full cursor-crosshair'
+  const canvasStyle = { imageRendering: 'pixelated' as const, display: 'block' as const }
 
   return (
     <div className="flex flex-col gap-8 max-w-3xl mx-auto w-full">
       <ViewHeader
         title="Isolate channels"
-        description="The same simulation shown twice — left channel U (the substrate), right channel V (the activator). They are coupled but move in opposite directions."
+        description="The same simulation shown twice — left channel U (the substrate), right channel V (the activator). They are coupled but move in opposite directions. Pause and hover either canvas to read both concentrations at a point."
       />
 
-      <div className="flex flex-col gap-2">
-        <span className="type-annotation-sc text-void-60">Pattern preset</span>
+      {/* ── Controls: preset + transport ── */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap gap-2">
           {PRESETS.map(p => (
             <ToggleChip
@@ -78,44 +176,57 @@ export function ViewIsolate() {
               active={activePreset === p.id}
               onClick={() => handlePreset(p.id)}
             >
-              {p.name}
+              <span className="flex items-center gap-1.5">
+                <PatternGlyph id={p.id} />
+                {p.name}
+              </span>
             </ToggleChip>
           ))}
         </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
-          <span className="type-annotation-sc text-void-60">U — substrate</span>
-          <div className="rounded-xl overflow-hidden border border-void-20 bg-void-0 aspect-square">
-            <canvas
-              ref={canvasURef}
-              className="w-full h-full"
-              style={{ imageRendering: 'pixelated', display: 'block' }}
-            />
-          </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <span className="type-annotation-sc text-void-60">V — activator</span>
-          <div className="rounded-xl overflow-hidden border border-void-20 bg-void-0 aspect-square">
-            <canvas
-              ref={canvasVRef}
-              className="w-full h-full"
-              style={{ imageRendering: 'pixelated', display: 'block' }}
-            />
-          </div>
+        <div className="flex items-center gap-2">
+          <IconButton onClick={() => setRunning(r => !r)} aria-label={running ? 'Pause' : 'Play'}>
+            {running ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+          </IconButton>
+          <IconButton onClick={handleReset} aria-label="Reset simulation">
+            <RotateCcw className="w-3.5 h-3.5" />
+          </IconButton>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <CalloutCard colour="pulsar" label="U is the substrate">
-          U starts at 1 everywhere (full concentration). Where V is present, U is consumed.
-          High U = dark areas where activator hasn't reached.
-        </CalloutCard>
-        <CalloutCard colour="corona" label="V is the activator">
-          V begins near zero and is produced where U is present. The pattern you see in Simulate
-          is entirely the V concentration — U is its inverse.
-        </CalloutCard>
+      {/* ── Channels + explanation, grouped so the row gap matches the column gap ── */}
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="relative rounded-xl overflow-hidden border border-void-20 bg-void-0 aspect-square">
+            <canvas ref={canvasURef} onMouseMove={handleHover} onMouseLeave={handleLeave} className={canvasClass} style={canvasStyle} />
+            {hover && <Crosshair cell={hover} />}
+            {hover && readout && (
+              <div className="absolute bottom-2 left-2 pointer-events-none rounded-md px-1.5 py-0.5 bg-void-0/80 backdrop-blur-sm type-annotation font-mono text-nebula">
+                U {readout.u.toFixed(3)}
+              </div>
+            )}
+          </div>
+          <div className="relative rounded-xl overflow-hidden border border-void-20 bg-void-0 aspect-square">
+            <canvas ref={canvasVRef} onMouseMove={handleHover} onMouseLeave={handleLeave} className={canvasClass} style={canvasStyle} />
+            {hover && <Crosshair cell={hover} />}
+            {hover && readout && (
+              <div className="absolute bottom-2 left-2 pointer-events-none rounded-md px-1.5 py-0.5 bg-void-0/80 backdrop-blur-sm type-annotation font-mono text-supernova">
+                V {readout.v.toFixed(3)}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <CalloutCard colour="nebula" label="U is the substrate">
+            U starts at 1 everywhere (full concentration) — the bright field. Where V is present,
+            U is consumed, carving out the dark holes.
+          </CalloutCard>
+          <CalloutCard colour="supernova" label="V is the activator">
+            V begins near zero and is produced where U is present. The pattern you see in Simulate
+            is entirely the V concentration — U is its inverse.
+          </CalloutCard>
+        </div>
       </div>
     </div>
   )

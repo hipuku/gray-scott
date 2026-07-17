@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Pause, Play, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
+import { Pause, Play, RotateCcw, ChevronDown } from 'lucide-react'
 import { ViewHeader } from '@kern/molecules/ViewHeader'
 import { StatusChip } from '@kern/atoms/StatusChip'
 import { ParamSlider } from '@kern/molecules/ParamSlider'
 import { ToggleChip } from '@kern/atoms/ToggleChip'
 import { IconButton } from '@kern/atoms/IconButton'
+import { PatternGlyph } from '@/components/PatternGlyph'
 import { cn } from '@/lib/utils'
 import { GRID_SIZE, DEFAULT_PARAMS } from '@/simulation/gray-scott'
 import { PRESETS } from '@/simulation/presets'
@@ -131,10 +132,12 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
     workerRef.current?.postMessage({ type: 'seed' })
   }
 
+  const region = classifyRegion(f, k)
+
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-full gap-4">
+    <div className="flex flex-col h-full gap-6 max-w-3xl mx-auto w-full">
       <ViewHeader
         title="Simulate"
         description="Reaction-diffusion growing from three seeded perturbations. Adjust f and k to shift between pattern classes."
@@ -142,46 +145,48 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
 
       <div className="flex flex-1 gap-6 min-h-0">
 
-        {/* ── Canvas ── */}
-        <div className="flex-1 relative rounded-xl overflow-hidden bg-void-0 border border-void-20 min-w-0">
-          <canvas
-            ref={canvasRef}
-            className="w-full h-full"
-            style={{ imageRendering: 'pixelated' }}
-          />
+        {/* ── Canvas — square, sized to fit the column height ── */}
+        <div className="flex-1 min-w-0 min-h-0 flex justify-center">
+          <div className="relative h-full aspect-square max-w-full rounded-xl overflow-hidden bg-void-0 border border-void-20">
+            <canvas
+              ref={canvasRef}
+              className="w-full h-full"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-lg bg-void-0/70 backdrop-blur-sm px-2 py-1">
+              <StatusChip colour={running ? 'nebula' : 'neutral'}>
+                {running ? 'Running' : 'Paused'}
+              </StatusChip>
+              {fps !== null && (
+                <span className="type-annotation font-mono text-void-50">{fps} fps</span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* ── Controls ── */}
-        <div className="flex flex-col gap-5 w-56 shrink-0">
+        {/* ── Controls sidebar ── */}
+        <div className="w-52 shrink-0 flex flex-col gap-5 overflow-y-auto">
 
           {/* Presets */}
           <div className="flex flex-col gap-2">
             <span className="type-annotation-sc text-void-60">Pattern</span>
             <div className="flex flex-wrap gap-2">
-              {PRESETS.map(p => {
-                const region = classifyRegion(p.f, p.k)
-                return (
-                  <ToggleChip
-                    key={p.id}
-                    active={activePreset === p.id}
-                    onClick={() => handlePreset(p.id)}
-                  >
-                    <span className="flex items-center gap-1.5">
-                      {region && (
-                        <span
-                          className="w-1.5 h-1.5 rounded-full shrink-0 inline-block"
-                          style={{ backgroundColor: region.hex }}
-                        />
-                      )}
-                      {p.name}
-                    </span>
-                  </ToggleChip>
-                )
-              })}
+              {PRESETS.map(p => (
+                <ToggleChip
+                  key={p.id}
+                  active={activePreset === p.id}
+                  onClick={() => handlePreset(p.id)}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <PatternGlyph id={p.id} />
+                    {p.name}
+                  </span>
+                </ToggleChip>
+              ))}
             </div>
           </div>
 
-          {/* f / k sliders + region context */}
+          {/* f / k sliders + region */}
           <div className="flex flex-col gap-4">
             <ParamSlider
               label="f — feed rate"
@@ -199,66 +204,77 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
               step={0.001}
               onChange={v => { setK(v); setActivePreset('') }}
             />
-            {(() => {
-              const region = classifyRegion(f, k)
-              return (
-                <StatusChip colour={region?.chipColour ?? 'neutral'}>
-                  {region?.label ?? 'Boundary zone'}
-                </StatusChip>
-              )
-            })()}
+            <StatusChip colour={region ? 'nebula' : 'neutral'}>
+              <span className="flex items-center gap-1.5">
+                {region && <PatternGlyph id={region.id} />}
+                {region?.label ?? 'Boundary zone'}
+              </span>
+            </StatusChip>
           </div>
 
           {/* Advanced — Du / Dv */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col">
             <div className="h-px bg-void-20" />
             <button
               type="button"
               onClick={() => setShowAdvanced(s => !s)}
+              aria-expanded={showAdvanced}
               className={cn(
-                'flex items-center justify-between type-annotation text-void-60',
+                'flex items-center justify-between type-annotation text-void-60 py-3',
                 'hover:text-void-90 transition-colors duration-150',
               )}
             >
               <span>Advanced</span>
-              {showAdvanced
-                ? <ChevronUp  className="w-3 h-3" />
-                : <ChevronDown className="w-3 h-3" />}
+              <ChevronDown
+                className={cn(
+                  'w-3 h-3 transition-transform duration-300 ease-out',
+                  showAdvanced && 'rotate-180',
+                )}
+              />
             </button>
 
-            {showAdvanced && (
-              <div className="flex flex-col gap-4">
-                <ParamSlider
-                  label="Du — substrate"
-                  value={du}
-                  min={0.05}
-                  max={0.50}
-                  step={0.001}
-                  onChange={setDu}
-                />
-                <ParamSlider
-                  label="Dv — activator"
-                  value={dv}
-                  min={0.025}
-                  max={0.25}
-                  step={0.0005}
-                  onChange={setDv}
-                  format={v => v.toFixed(4)}
-                />
-                <p className="type-annotation text-void-40">
-                  Turing instability requires Du &gt; Dv. Set Dv ≥ Du to watch patterns dissolve.
-                </p>
-                {(du !== DEFAULT_PARAMS.Du || dv !== DEFAULT_PARAMS.Dv) && (
-                  <button
-                    type="button"
-                    onClick={() => { setDu(DEFAULT_PARAMS.Du); setDv(DEFAULT_PARAMS.Dv) }}
-                    className="type-annotation text-void-50 hover:text-void-70 transition-colors duration-150 text-left"
-                  >
-                    Reset to defaults
-                  </button>
-                )}
+            <div
+              className={cn(
+                'grid transition-[grid-template-rows] duration-300 ease-out',
+                showAdvanced ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+              )}
+            >
+              <div className="overflow-hidden">
+                <div className="flex flex-col gap-4 pb-3">
+                  <ParamSlider
+                    label="Du — substrate"
+                    value={du}
+                    min={0.05}
+                    max={0.50}
+                    step={0.001}
+                    onChange={setDu}
+                  />
+                  <ParamSlider
+                    label="Dv — activator"
+                    value={dv}
+                    min={0.025}
+                    max={0.25}
+                    step={0.0005}
+                    onChange={setDv}
+                    format={v => v.toFixed(4)}
+                  />
+                  <p className="type-annotation text-void-40">
+                    Turing instability requires Du &gt; Dv. Set Dv ≥ Du to watch patterns dissolve.
+                  </p>
+                  {(du !== DEFAULT_PARAMS.Du || dv !== DEFAULT_PARAMS.Dv) && (
+                    <button
+                      type="button"
+                      onClick={() => { setDu(DEFAULT_PARAMS.Du); setDv(DEFAULT_PARAMS.Dv) }}
+                      className="type-annotation text-void-50 hover:text-void-70 transition-colors duration-150 text-left"
+                    >
+                      Reset to defaults
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
+
+            <div className="h-px bg-void-20" />
           </div>
 
           {/* Speed */}
@@ -266,20 +282,15 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
             <span className="type-annotation-sc text-void-60">Speed</span>
             <div className="flex gap-2">
               {SPEED_OPTIONS.map(s => (
-                <ToggleChip
-                  key={s}
-                  active={speed === s}
-                  onClick={() => setSpeed(s)}
-                  mono
-                >
+                <ToggleChip key={s} active={speed === s} onClick={() => setSpeed(s)} mono>
                   ×{s}
                 </ToggleChip>
               ))}
             </div>
           </div>
 
-          {/* Play / Pause / Reset */}
-          <div className="flex gap-2 mt-auto">
+          {/* Transport */}
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setRunning(r => !r)}
@@ -299,17 +310,6 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
               <RotateCcw className="w-3.5 h-3.5" />
             </IconButton>
           </div>
-
-          {/* Status + FPS */}
-          <div className="flex items-center justify-between">
-            <StatusChip colour={running ? 'pulsar' : 'neutral'}>
-              {running ? 'Running' : 'Paused'}
-            </StatusChip>
-            {fps !== null && (
-              <span className="type-annotation font-mono text-void-50">{fps} fps</span>
-            )}
-          </div>
-
         </div>
       </div>
     </div>

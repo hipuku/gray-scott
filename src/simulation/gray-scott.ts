@@ -85,8 +85,17 @@ function oklchToRgbBytes(L: number, C: number, H: number): [number, number, numb
 }
 
 function buildLut(fromHex: string, toHex: string): Uint8Array {
-  const [L0, C0, H0] = hexToOklch(fromHex)
-  const [L1, C1, H1] = hexToOklch(toHex)
+  const [L0, C0, H0raw] = hexToOklch(fromHex)
+  const [L1, C1, H1raw] = hexToOklch(toHex)
+
+  // An achromatic endpoint (near-black/grey) has no meaningful hue — atan2 of a
+  // near-zero a/b pair returns an arbitrary angle (e.g. void-0 reads as ~blue).
+  // Interpolating toward it drags the ramp through off-palette hues, which is
+  // why the void→nebula ramp used to show navy midtones. Anchor the achromatic
+  // end's hue to the chromatic end so the ramp is a clean constant-hue sweep.
+  const CHROMA_EPS = 0.01
+  const H0 = C0 < CHROMA_EPS ? H1raw : H0raw
+  const H1 = C1 < CHROMA_EPS ? H0raw : H1raw
 
   // Angular interpolation on hue: take the shortest path around the circle
   let dH = H1 - H0
@@ -108,10 +117,10 @@ function buildLut(fromHex: string, toHex: string): Uint8Array {
   return lut
 }
 
-// void-0 → pulsar  (V channel default, U channel)
-const LUT_PULSAR = buildLut('#121213', '#7193ED')
-// void-0 → corona  (V channel in Isolate view)
-const LUT_CORONA  = buildLut('#121213', '#F9C3D6')
+// void-0 → nebula  (V channel default, U channel)
+const LUT_NEBULA = buildLut('#121213', '#15AD70')
+// void-0 → supernova  (V/activator channel in Channels view)
+const LUT_SUPERNOVA = buildLut('#121213', '#FFC700')
 
 // ─── Buffers ──────────────────────────────────────────────────────────────────
 
@@ -195,75 +204,44 @@ export function step(
 // Each render function maps a concentration to a pixel via the precomputed LUT.
 // V is amplified (×3) for visual contrast since typical concentrations are low.
 
-export function renderV(imageData: ImageData, buf: SimBuffer, n = GRID_SIZE): void {
-  const data = imageData.data
-  const { V } = buf
-  const len = n * n
-  for (let i = 0; i < len; i++) {
-    const idx = Math.min(255, (V[i] * 3.0 * 255) | 0)
-    const p = i * 4
-    data[p]     = LUT_PULSAR[idx * 3]
-    data[p + 1] = LUT_PULSAR[idx * 3 + 1]
-    data[p + 2] = LUT_PULSAR[idx * 3 + 2]
-    data[p + 3] = 255
-  }
-}
+// U hovers near its feed baseline of 1 and only dips to ~0.4 where the reaction
+// consumes it, so drawn straight it reads as a flat mid-green and its inverse
+// relationship to V is invisible. Stretch the band [U_BLACK, 1] across the full
+// ramp: depleted regions (where V's structure lives) fall to black, replenished
+// regions stay bright — making U a true photo-negative of V, contrast-matched to
+// V's ×3 amplification.
+const U_BLACK = 0.5
 
 export function renderU(imageData: ImageData, buf: SimBuffer, n = GRID_SIZE): void {
   const data = imageData.data
   const { U } = buf
   const len = n * n
+  const scale = 255 / (1 - U_BLACK)
   for (let i = 0; i < len; i++) {
-    const idx = Math.min(255, (U[i] * 255) | 0)
+    const idx = Math.max(0, Math.min(255, ((U[i] - U_BLACK) * scale) | 0))
     const p = i * 4
-    data[p]     = LUT_PULSAR[idx * 3]
-    data[p + 1] = LUT_PULSAR[idx * 3 + 1]
-    data[p + 2] = LUT_PULSAR[idx * 3 + 2]
+    data[p]     = LUT_NEBULA[idx * 3]
+    data[p + 1] = LUT_NEBULA[idx * 3 + 1]
+    data[p + 2] = LUT_NEBULA[idx * 3 + 2]
     data[p + 3] = 255
   }
 }
 
-export function renderVCorona(imageData: ImageData, buf: SimBuffer, n = GRID_SIZE): void {
+export function renderVSupernova(imageData: ImageData, buf: SimBuffer, n = GRID_SIZE): void {
   const data = imageData.data
   const { V } = buf
   const len = n * n
   for (let i = 0; i < len; i++) {
     const idx = Math.min(255, (V[i] * 3.0 * 255) | 0)
     const p = i * 4
-    data[p]     = LUT_CORONA[idx * 3]
-    data[p + 1] = LUT_CORONA[idx * 3 + 1]
-    data[p + 2] = LUT_CORONA[idx * 3 + 2]
+    data[p]     = LUT_SUPERNOVA[idx * 3]
+    data[p + 1] = LUT_SUPERNOVA[idx * 3 + 1]
+    data[p + 2] = LUT_SUPERNOVA[idx * 3 + 2]
     data[p + 3] = 255
   }
 }
 
 // Render to plain Uint8ClampedArrays (used by workers that lack ImageData).
-
-export function renderUToPixels(pixels: Uint8ClampedArray, buf: SimBuffer, n = GRID_SIZE): void {
-  const { U } = buf
-  const len = n * n
-  for (let i = 0; i < len; i++) {
-    const idx = Math.min(255, (U[i] * 255) | 0)
-    const p = i * 4
-    pixels[p]     = LUT_PULSAR[idx * 3]
-    pixels[p + 1] = LUT_PULSAR[idx * 3 + 1]
-    pixels[p + 2] = LUT_PULSAR[idx * 3 + 2]
-    pixels[p + 3] = 255
-  }
-}
-
-export function renderVCoronaToPixels(pixels: Uint8ClampedArray, buf: SimBuffer, n = GRID_SIZE): void {
-  const { V } = buf
-  const len = n * n
-  for (let i = 0; i < len; i++) {
-    const idx = Math.min(255, (V[i] * 3.0 * 255) | 0)
-    const p = i * 4
-    pixels[p]     = LUT_CORONA[idx * 3]
-    pixels[p + 1] = LUT_CORONA[idx * 3 + 1]
-    pixels[p + 2] = LUT_CORONA[idx * 3 + 2]
-    pixels[p + 3] = 255
-  }
-}
 
 export function renderVToPixels(pixels: Uint8ClampedArray, buf: SimBuffer, n = GRID_SIZE): void {
   const { V } = buf
@@ -271,9 +249,9 @@ export function renderVToPixels(pixels: Uint8ClampedArray, buf: SimBuffer, n = G
   for (let i = 0; i < len; i++) {
     const idx = Math.min(255, (V[i] * 3.0 * 255) | 0)
     const p = i * 4
-    pixels[p]     = LUT_PULSAR[idx * 3]
-    pixels[p + 1] = LUT_PULSAR[idx * 3 + 1]
-    pixels[p + 2] = LUT_PULSAR[idx * 3 + 2]
+    pixels[p]     = LUT_NEBULA[idx * 3]
+    pixels[p + 1] = LUT_NEBULA[idx * 3 + 1]
+    pixels[p + 2] = LUT_NEBULA[idx * 3 + 2]
     pixels[p + 3] = 255
   }
 }

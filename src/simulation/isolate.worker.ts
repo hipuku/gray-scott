@@ -1,19 +1,17 @@
-// Isolate worker: runs one Gray-Scott simulation and posts back both the U
-// (substrate) and V (activator) channels as separate pixel arrays per frame.
-// Used by ViewIsolate to drive the two side-by-side canvases off the main thread.
+// Isolate worker: runs one Gray-Scott simulation and posts back the raw U
+// (substrate) and V (activator) concentration fields each frame. ViewIsolate
+// renders both channels on the main thread so it can also read the concentration
+// under the cursor for the inspector — the sim step still runs off-thread here.
 //
 // Message protocol (main → worker):
-//   { type: 'seed' }
+//   { type: 'seed' }                       reseed, then post a frame
 //   { type: 'setParams'; params: SimParams }
-//   { type: 'tick' }
+//   { type: 'tick' }                        advance 4 steps, then post a frame
+//   { type: 'render' }                      re-post the current frame, no advance
 // Message protocol (worker → main):
-//   { type: 'frame'; uBuffer: ArrayBuffer; vBuffer: ArrayBuffer }
+//   { type: 'frame'; uBuffer: ArrayBuffer; vBuffer: ArrayBuffer }  Float32 fields
 
-import {
-  createBuffers, seed, step,
-  renderUToPixels, renderVCoronaToPixels,
-  GRID_SIZE, DEFAULT_PARAMS,
-} from './gray-scott'
+import { createBuffers, seed, step, DEFAULT_PARAMS } from './gray-scott'
 import type { SimParams } from './types'
 
 declare const self: DedicatedWorkerGlobalScope
@@ -29,20 +27,23 @@ function doSeed() {
   front = 0
 }
 
-function doTick() {
+function doStep() {
   for (let i = 0; i < 4; i++) {
     const src = buffers[front]
     const dst = buffers[(front ^ 1) as 0 | 1]
     step(src, dst, params)
     front = (front ^ 1) as 0 | 1
   }
-  const uPixels = new Uint8ClampedArray(GRID_SIZE * GRID_SIZE * 4)
-  const vPixels = new Uint8ClampedArray(GRID_SIZE * GRID_SIZE * 4)
-  renderUToPixels(uPixels, buffers[front])
-  renderVCoronaToPixels(vPixels, buffers[front])
+}
+
+function postFrame() {
+  // Copy the live fields (slice) so the worker keeps its buffers to keep
+  // simulating, then transfer the copies to skip a structured clone.
+  const u = buffers[front].U.slice()
+  const v = buffers[front].V.slice()
   self.postMessage(
-    { type: 'frame', uBuffer: uPixels.buffer, vBuffer: vPixels.buffer },
-    [uPixels.buffer, vPixels.buffer],
+    { type: 'frame', uBuffer: u.buffer, vBuffer: v.buffer },
+    [u.buffer, v.buffer],
   )
 }
 
@@ -53,10 +54,12 @@ self.onmessage = (e: MessageEvent) => {
     | { type: 'seed' }
     | { type: 'setParams'; params: SimParams }
     | { type: 'tick' }
+    | { type: 'render' }
 
   switch (msg.type) {
-    case 'seed':      doSeed();           break
-    case 'setParams': params = msg.params; break
-    case 'tick':      doTick();            break
+    case 'seed':      doSeed(); postFrame(); break
+    case 'setParams': params = msg.params;   break
+    case 'tick':      doStep(); postFrame(); break
+    case 'render':    postFrame();           break
   }
 }
