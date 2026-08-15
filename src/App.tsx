@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Info, Waves, Grid3x3, Globe, Columns2 } from 'lucide-react'
+import { Info, Waves, Grid3x3, Columns2 } from 'lucide-react'
 import { AppSidebar }    from '@kern/organisms/AppSidebar'
-import { HipukuLogo }    from '@kern/organisms/HipukuLogo'
+import { HipukuLogo }    from '@kern/atoms/HipukuLogo'
 import { ErrorBoundary } from '@kern/organisms/ErrorBoundary'
-import { GitHubIcon }    from '@kern/atoms/GitHubIcon'
+import { SocialBar }     from '@kern/molecules/SocialBar'
 import { ViewAbout }   from '@/components/ViewAbout'
 import { ViewSimulate } from '@/components/ViewSimulate'
 import { ViewSpace }   from '@/components/ViewSpace'
@@ -15,11 +15,6 @@ const NAV_ITEMS = [
   { id: 'simulate', label: 'Simulate',           icon: Waves      },
   { id: 'isolate',  label: 'Channels',           icon: Columns2   },
   { id: 'space',    label: 'Parameter space',    icon: Grid3x3    },
-]
-
-const SOCIAL_LINKS = [
-  { Icon: Globe,      label: 'gray-scott website', href: 'https://www.hipuku.dev'               },
-  { Icon: GitHubIcon, label: 'GitHub',              href: 'https://github.com/hipuku/gray-scott' },
 ]
 
 const LOGO_FILLS = {
@@ -41,7 +36,7 @@ export default function App() {
         activeId={activeView}
         onNavigate={(id) => setActiveView(id as ViewId)}
         accentActiveClass="text-nebula"
-        socialLinks={SOCIAL_LINKS}
+        social={<SocialBar siteName="gray-scott" githubUrl="https://github.com/hipuku/gray-scott" />}
         mobileOpen={mobileOpen}
         onMobileToggle={() => setMobileOpen(o => !o)}
         colophon={
