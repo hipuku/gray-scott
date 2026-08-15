@@ -29,19 +29,19 @@ export function ViewAbout() {
         </div>
         <ul className="flex flex-col gap-3 list-none p-0 m-0">
           <BulletItem>
-            <InlineCode color="text-nebula">D<sub>u</sub></InlineCode> and{' '}
-            <InlineCode color="text-supernova">D<sub>v</sub></InlineCode> are the diffusion coefficients, how fast each chemical spreads. U diffuses roughly twice as fast as V.
+            <InlineCode colour="text-nebula">D<sub>u</sub></InlineCode> and{' '}
+            <InlineCode colour="text-supernova">D<sub>v</sub></InlineCode> are the diffusion coefficients, how fast each chemical spreads. U diffuses roughly twice as fast as V.
           </BulletItem>
           <BulletItem>
-            <InlineCode color="text-nebula">f</InlineCode> is the feed rate, how quickly U is
+            <InlineCode colour="text-nebula">f</InlineCode> is the feed rate, how quickly U is
             replenished from an external reservoir. Higher f keeps U well-supplied.
           </BulletItem>
           <BulletItem>
-            <InlineCode color="text-supernova">k</InlineCode> is the kill rate, how quickly V is
+            <InlineCode colour="text-supernova">k</InlineCode> is the kill rate, how quickly V is
             removed. Together, f and k determine which pattern class emerges.
           </BulletItem>
           <BulletItem>
-            The <InlineCode color="text-void-60">UV²</InlineCode> term is the reaction, V is
+            The <InlineCode colour="text-void-60">UV²</InlineCode> term is the reaction, V is
             autocatalytic (it converts U into more V), but only where both chemicals meet.
           </BulletItem>
         </ul>
@@ -52,7 +52,7 @@ export function ViewAbout() {
         <ul className="flex flex-col gap-3 list-none p-0 m-0">
           <BulletItem>
             The simulation runs on a <strong className="text-void-80 font-semibold">512 × 512 grid</strong> — 262,144 pixels updated every frame — using two interleaved{' '}
-            <InlineCode color="text-void-60">Float32Array</InlineCode> ping-pong buffers. One buffer
+            <InlineCode colour="text-void-60">Float32Array</InlineCode> ping-pong buffers. One buffer
             is read, the other is written, then they swap.
           </BulletItem>
           <BulletItem>
@@ -61,16 +61,16 @@ export function ViewAbout() {
             artefacts appear.
           </BulletItem>
           <BulletItem>
-            Time integration uses forward Euler with <InlineCode color="text-void-60">dt = 1.0</InlineCode>.
+            Time integration uses forward Euler with <InlineCode colour="text-void-60">dt = 1.0</InlineCode>.
             Stability is maintained by the fixed diffusion coefficients: D<sub>u</sub> = 0.2097,
             D<sub>v</sub> = 0.1050 (from Pearson 1993).
           </BulletItem>
           <BulletItem>
             Each frame is rendered in a <strong className="text-void-80 font-semibold">Web Worker</strong> — the
             simulation step and colour mapping run entirely off the main thread. The worker posts back a transferable{' '}
-            <InlineCode color="text-void-60">ArrayBuffer</InlineCode>; the main thread wraps it in{' '}
-            <InlineCode color="text-void-60">ImageData</InlineCode> and commits to canvas via{' '}
-            <InlineCode color="text-void-60">putImageData</InlineCode>, keeping the UI thread free at all speeds.
+            <InlineCode colour="text-void-60">ArrayBuffer</InlineCode>; the main thread wraps it in{' '}
+            <InlineCode colour="text-void-60">ImageData</InlineCode> and commits to canvas via{' '}
+            <InlineCode colour="text-void-60">putImageData</InlineCode>, keeping the UI thread free at all speeds.
           </BulletItem>
           <BulletItem>
             Colour mapping uses <strong className="text-void-80 font-semibold">OKLCH interpolation</strong> — a
@@ -88,12 +88,12 @@ export function ViewAbout() {
         </p>
         <ul className="flex flex-col gap-3 list-none p-0 m-0">
           <BulletItem>
-            <InlineCode color="text-nebula">U</InlineCode> starts at 1 everywhere (full concentration).
+            <InlineCode colour="text-nebula">U</InlineCode> starts at 1 everywhere (full concentration).
             Where V is present, U is consumed by the autocatalytic reaction UV². High U means the activator
             has not yet reached that region.
           </BulletItem>
           <BulletItem>
-            <InlineCode color="text-supernova">V</InlineCode> begins near zero and is produced wherever U is
+            <InlineCode colour="text-supernova">V</InlineCode> begins near zero and is produced wherever U is
             present. It diffuses more slowly than U (D<sub>v</sub> ≈ 0.5 × D<sub>u</sub>) — this slower
             spread is what creates the spatial instability. If V diffused as fast as U, the system would
             equilibrate uniformly and no pattern would form.
