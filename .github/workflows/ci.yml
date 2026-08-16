@@ -73,7 +73,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages project create gray-scott --production-branch=main
+          command: pages project create gray-scott-hipuku --production-branch=main
         continue-on-error: true
 
       - name: Deploy
@@ -81,4 +81,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=gray-scott --branch=main --commit-dirty=true
+          command: pages deploy dist --project-name=gray-scott-hipuku --branch=main --commit-dirty=true
