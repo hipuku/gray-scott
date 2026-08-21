@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { Pause, Play, RotateCcw, ChevronDown } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { ViewHeader } from '@kern/molecules/ViewHeader'
 import { StatusChip } from '@kern/atoms/StatusChip'
-import { ParamSlider } from '@kern/molecules/ParamSlider'
 import { ToggleChip } from '@kern/atoms/ToggleChip'
-import { IconButton } from '@kern/atoms/IconButton'
+import { ParamSlider } from '@kern/molecules/ParamSlider'
+import { ChipGroup } from '@kern/molecules/ChipGroup'
+import { CanvasStage } from '@kern/molecules/CanvasStage'
+import { TransportControls } from '@kern/molecules/TransportControls'
+import { Workbench } from '@kern/organisms/Workbench'
 import { PatternGlyph } from '@/components/PatternGlyph'
 import { cn } from '@/lib/utils'
 import { GRID_SIZE, DEFAULT_PARAMS } from '@/simulation/gray-scott'
@@ -143,48 +146,42 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
         description="Reaction-diffusion growing from three seeded perturbations. Adjust f and k to shift between pattern classes."
       />
 
-      <div className="flex flex-1 gap-6 min-h-0">
-
-        {/* ── Canvas — square, sized to fit the column height ── */}
-        <div className="flex-1 min-w-0 min-h-0 flex justify-center">
-          <div className="relative h-full aspect-square max-w-full rounded-xl overflow-hidden bg-void-0 border border-void-20">
+      <Workbench
+        stage={
+          <CanvasStage className="h-full max-w-full">
             <canvas
               ref={canvasRef}
               className="w-full h-full"
               style={{ imageRendering: 'pixelated' }}
             />
-            <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-lg bg-void-0/70 backdrop-blur-sm px-2 py-1">
+            <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-control bg-background/70 backdrop-blur-sm px-2 py-1">
               <StatusChip colour={running ? 'nebula' : 'neutral'}>
                 {running ? 'Running' : 'Paused'}
               </StatusChip>
               {fps !== null && (
-                <span className="type-annotation font-mono text-void-50">{fps} fps</span>
+                <span className="type-annotation font-mono text-ink-muted">{fps} fps</span>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* ── Controls sidebar ── */}
-        <div className="w-52 shrink-0 flex flex-col gap-5 overflow-y-auto">
+          </CanvasStage>
+        }
+        controls={
+          <>
 
           {/* Presets */}
-          <div className="flex flex-col gap-2">
-            <span className="type-annotation-sc text-void-60">Pattern</span>
-            <div className="flex flex-wrap gap-2">
-              {PRESETS.map(p => (
-                <ToggleChip
-                  key={p.id}
-                  active={activePreset === p.id}
-                  onClick={() => handlePreset(p.id)}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <PatternGlyph id={p.id} />
-                    {p.name}
-                  </span>
-                </ToggleChip>
-              ))}
-            </div>
-          </div>
+          <ChipGroup label="Pattern">
+            {PRESETS.map(p => (
+              <ToggleChip
+                key={p.id}
+                active={activePreset === p.id}
+                onClick={() => handlePreset(p.id)}
+              >
+                <span className="flex items-center gap-1.5">
+                  <PatternGlyph id={p.id} />
+                  {p.name}
+                </span>
+              </ToggleChip>
+            ))}
+          </ChipGroup>
 
           {/* f / k sliders + region */}
           <div className="flex flex-col gap-4">
@@ -278,40 +275,24 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
           </div>
 
           {/* Speed */}
-          <div className="flex flex-col gap-2">
-            <span className="type-annotation-sc text-void-60">Speed</span>
-            <div className="flex gap-2">
-              {SPEED_OPTIONS.map(s => (
-                <ToggleChip key={s} active={speed === s} onClick={() => setSpeed(s)} mono>
-                  ×{s}
-                </ToggleChip>
-              ))}
-            </div>
-          </div>
+          <ChipGroup label="Speed">
+            {SPEED_OPTIONS.map(s => (
+              <ToggleChip key={s} active={speed === s} onClick={() => setSpeed(s)} mono>
+                ×{s}
+              </ToggleChip>
+            ))}
+          </ChipGroup>
 
           {/* Transport */}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setRunning(r => !r)}
-              aria-label={running ? 'Pause' : 'Play'}
-              className={cn(
-                'flex items-center gap-2 flex-1 justify-center py-2 rounded-xl border',
-                'transition-colors duration-150 type-annotation',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--ring)',
-                'bg-void-20 border-void-30 text-void-60 hover:text-void-90 hover:border-void-40',
-              )}
-            >
-              {running
-                ? <><Pause className="w-3.5 h-3.5" /> Pause</>
-                : <><Play  className="w-3.5 h-3.5" /> Play</>}
-            </button>
-            <IconButton onClick={handleReset} aria-label="Reset simulation">
-              <RotateCcw className="w-3.5 h-3.5" />
-            </IconButton>
-          </div>
-        </div>
-      </div>
+          <TransportControls
+            running={running}
+            onToggle={() => setRunning(r => !r)}
+            onReset={handleReset}
+            resetLabel="Reset simulation"
+          />
+          </>
+        }
+      />
     </div>
   )
 }

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Pause, Play, RotateCcw } from 'lucide-react'
 import { ViewHeader } from '@kern/molecules/ViewHeader'
 import { CalloutCard } from '@kern/molecules/CalloutCard'
 import { ToggleChip } from '@kern/atoms/ToggleChip'
-import { IconButton } from '@kern/atoms/IconButton'
+import { ViewContainer } from '@kern/templates/ViewContainer'
+import { CanvasStage } from '@kern/molecules/CanvasStage'
+import { TransportControls } from '@kern/molecules/TransportControls'
 import { PatternGlyph } from '@/components/PatternGlyph'
 import { PRESETS } from '@/simulation/presets'
 import {
@@ -161,7 +162,7 @@ export function ViewIsolate() {
   const canvasStyle = { imageRendering: 'pixelated' as const, display: 'block' as const }
 
   return (
-    <div className="flex flex-col gap-8 max-w-3xl mx-auto w-full">
+    <ViewContainer width="lg">
       <ViewHeader
         title="Isolate channels"
         description="The same simulation shown twice — left channel U (the substrate), right channel V (the activator). They are coupled but move in opposite directions. Pause and hover either canvas to read both concentrations at a point."
@@ -184,20 +185,18 @@ export function ViewIsolate() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          <IconButton onClick={() => setRunning(r => !r)} aria-label={running ? 'Pause' : 'Play'}>
-            {running ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-          </IconButton>
-          <IconButton onClick={handleReset} aria-label="Reset simulation">
-            <RotateCcw className="w-3.5 h-3.5" />
-          </IconButton>
-        </div>
+        <TransportControls
+          running={running}
+          onToggle={() => setRunning(r => !r)}
+          onReset={handleReset}
+          resetLabel="Reset simulation"
+        />
       </div>
 
       {/* ── Channels + explanation, grouped so the row gap matches the column gap ── */}
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="relative rounded-xl overflow-hidden border border-void-20 bg-void-0 aspect-square">
+          <CanvasStage>
             <canvas ref={canvasURef} onMouseMove={handleHover} onMouseLeave={handleLeave} className={canvasClass} style={canvasStyle} />
             {hover && <Crosshair cell={hover} />}
             {hover && readout && (
@@ -205,8 +204,8 @@ export function ViewIsolate() {
                 U {readout.u.toFixed(3)}
               </div>
             )}
-          </div>
-          <div className="relative rounded-xl overflow-hidden border border-void-20 bg-void-0 aspect-square">
+          </CanvasStage>
+          <CanvasStage>
             <canvas ref={canvasVRef} onMouseMove={handleHover} onMouseLeave={handleLeave} className={canvasClass} style={canvasStyle} />
             {hover && <Crosshair cell={hover} />}
             {hover && readout && (
@@ -214,7 +213,7 @@ export function ViewIsolate() {
                 V {readout.v.toFixed(3)}
               </div>
             )}
-          </div>
+          </CanvasStage>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -228,6 +227,6 @@ export function ViewIsolate() {
           </CalloutCard>
         </div>
       </div>
-    </div>
+    </ViewContainer>
   )
 }

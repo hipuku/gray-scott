@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ViewHeader } from '@kern/molecules/ViewHeader'
+import { ViewContainer } from '@kern/templates/ViewContainer'
+import { CanvasStage } from '@kern/molecules/CanvasStage'
 import { PatternGlyph } from '@/components/PatternGlyph'
 import { cn } from '@/lib/utils'
 import {
@@ -112,14 +114,14 @@ export function ViewSpace() {
     : null
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full">
+    <ViewContainer width="lg" gap="sm">
       <ViewHeader
         title="Parameter space"
         description="The (f, k) plane mapped to Pearson's 1993 pattern classification. Each region is marked by its pattern glyph; hover to read the parameters at any point."
       />
 
       {/* ── Map — full width, glyphs + axes + inspector inside ── */}
-      <div className="relative rounded-xl overflow-hidden border border-void-20 bg-void-10">
+      <CanvasStage square={false} className="bg-void-10">
         <canvas
           ref={mapRef}
           className="w-full block cursor-crosshair"
@@ -189,7 +191,7 @@ export function ViewSpace() {
             )}
           </div>
         )}
-      </div>
-    </div>
+      </CanvasStage>
+    </ViewContainer>
   )
 }
