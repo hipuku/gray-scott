@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ViewHeader } from '@kern/molecules/ViewHeader'
-import { ViewContainer } from '@kern/templates/ViewContainer'
-import { CanvasStage } from '@kern/molecules/CanvasStage'
+import { CanvasStage, ViewContainer, ViewHeader } from 'kern'
 import { PatternGlyph } from '@/components/PatternGlyph'
 import { cn } from '@/lib/utils'
 import {

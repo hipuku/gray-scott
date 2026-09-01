@@ -1,10 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ViewHeader } from '@kern/molecules/ViewHeader'
-import { CalloutCard } from '@kern/molecules/CalloutCard'
-import { ToggleChip } from '@kern/atoms/ToggleChip'
-import { ViewContainer } from '@kern/templates/ViewContainer'
-import { CanvasStage } from '@kern/molecules/CanvasStage'
-import { TransportControls } from '@kern/molecules/TransportControls'
+import { CalloutCard, CanvasStage, ToggleChip, TransportControls, ViewContainer, ViewHeader } from 'kern'
 import { PatternGlyph } from '@/components/PatternGlyph'
 import { PRESETS } from '@/simulation/presets'
 import {

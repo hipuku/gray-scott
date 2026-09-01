@@ -9,7 +9,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@kern': path.resolve(__dirname, 'node_modules/kern/src'),
       // Deduplicate lucide-react so kern and gray-scott share one version/types.
       // Kern declares lucide-react as a peerDependency; without this alias the
       // symlinked kern resolves to its own devDep copy (different version → TS

@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "../node_modules/kern/src/kern.css";
+@import "kern/kern.css";
 @source "../node_modules/kern/src";
 
 /* ── gray-scott semantic overrides ──────────────────────────────────────── */

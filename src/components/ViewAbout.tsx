@@ -1,10 +1,4 @@
-import { ViewContainer } from '@kern/templates/ViewContainer'
-import { Section }      from '@kern/molecules/Section'
-import { DataTable }    from '@kern/molecules/DataTable'
-import { BulletList }   from '@kern/molecules/BulletList'
-import { BulletItem }   from '@kern/atoms/BulletItem'
-import { ExternalLink } from '@kern/atoms/ExternalLink'
-import { InlineCode }   from '@kern/atoms/InlineCode'
+import { BulletItem, BulletList, DataTable, ExternalLink, InlineCode, Section, ViewContainer } from 'kern'
 
 export function ViewAbout() {
   return (
