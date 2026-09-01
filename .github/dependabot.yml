@@ -2,8 +2,9 @@
 # dependency policy. gray-scott was carrying three high advisories unreported:
 # the same gap kern itself had, for the same reason.
 #
-# Private repo: Dependabot also has to be enabled for private repositories in
-# the repository's settings, or this file is read and nothing opens.
+# Private repo. Dependabot for private repositories is already enabled on the
+# account, confirmed by this file opening pull requests the moment it landed, so
+# nothing further is needed in the repository's settings.
 #
 # Weekly and grouped, so a review is one pull request rather than nine.
 version: 2
