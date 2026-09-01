@@ -1,0 +1,51 @@
+# One of the three experiments consuming kern, and none of the three had a
+# dependency policy. gray-scott was carrying three high advisories unreported:
+# the same gap kern itself had, for the same reason.
+#
+# Private repo: Dependabot also has to be enabled for private repositories in
+# the repository's settings, or this file is read and nothing opens.
+#
+# Weekly and grouped, so a review is one pull request rather than nine.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      react:
+        patterns: ['react', 'react-dom', '@types/react', '@types/react-dom']
+      # Vite builds and vitest runs on the same Vite, so they move together or
+      # the runner ends up on a Vite the build does not use.
+      build:
+        patterns: ['vite', 'vitest', '@vitest/*', '@vitejs/*', 'tailwindcss', '@tailwindcss/*']
+      # The component layer these three share. Grouped because a class-variance
+      # or tailwind-merge change shows up in the same places.
+      ui:
+        patterns: ['class-variance-authority', 'clsx', 'tailwind-merge', 'tw-animate-css', 'lucide-react']
+      tooling:
+        patterns: ['eslint*', '@eslint/*', 'typescript-eslint', 'globals']
+    commit-message:
+      prefix: 'deps'
+    ignore:
+      # kern is consumed as GitHub-pinned source rather than from the registry,
+      # and its lockfile entry is repointed by hand when the tag moves. Left to
+      # Dependabot it opens pull requests it cannot resolve.
+      - dependency-name: 'kern'
+      # @types/node describes the runtime CI installs rather than the newest
+      # release line. A major here typechecks against APIs the running Node
+      # does not have.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      # TypeScript 7 is the native rewrite, deferred across every repo here so
+      # they move together. Recorded rather than closed: a closed pull request
+      # comes back on the next run and says nothing about why it was refused.
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
