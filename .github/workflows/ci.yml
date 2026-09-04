@@ -82,3 +82,25 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=gray-scott-hipuku --branch=main --commit-dirty=true
+
+      # A green deploy is not evidence the site changed. This repo served a
+      # nineteen-day-old build while CI, the deploy job and the URL were all
+      # green: the custom domain sat on a second Pages project whose builds had
+      # been failing since, and nothing compared the two. The entry hash is the
+      # cheapest thing that can tell them apart, because Vite renames it on any
+      # content change.
+      - name: Verify the live site serves this build
+        run: |
+          BUILT=$(ls dist/assets | grep -E '^index-.*\.js$' | head -1)
+          echo "built: $BUILT"
+          for i in $(seq 1 10); do
+            LIVE=$(curl -fsSL --max-time 20 "$SITE" | grep -oE 'index-[A-Za-z0-9_-]+\.js' | head -1 || true)
+            echo "attempt $i, live: ${LIVE:-none}"
+            [ "$LIVE" = "$BUILT" ] && echo "live site matches this build" && exit 0
+            sleep 15
+          done
+          echo "::error::$SITE serves ${LIVE:-nothing}, expected $BUILT."
+          echo "::error::The deploy reported success, so the domain is bound to a different Pages project."
+          exit 1
+        env:
+          SITE: https://gray-scott.hipuku.dev
