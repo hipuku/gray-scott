@@ -3,6 +3,11 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "target": "ES2022",
     "lib": ["ES2023"],
+    // vitest's own types reach into DOM lib and into subpath exports this
+    // config does not resolve, so a bump of vitest failed a typecheck of
+    // node_modules rather than of this repo. tsconfig.app.json already skips
+    // library checking; this config is the one that never did.
+    "skipLibCheck": true,
     "module": "esnext",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
