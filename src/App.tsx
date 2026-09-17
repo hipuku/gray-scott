@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Info, Waves, Grid3x3, Columns2 } from 'lucide-react'
+import { Columns2, Grid3x3, Info, Waves } from 'lucide-react'
 import { AppShell, Colophon, SocialBar } from 'kern'
 import { ViewAbout }   from '@/components/ViewAbout'
 import { ViewSimulate } from '@/components/ViewSimulate'
@@ -30,7 +30,7 @@ export default function App() {
       activeId={activeView}
       onNavigate={(id) => setActiveView(id as ViewId)}
       accentActiveClass="text-nebula"
-      social={<SocialBar siteName="gray-scott" githubUrl="https://github.com/hipuku/gray-scott" />}
+      social={<SocialBar siteName="gray-scott" />}
       colophon={<Colophon name="gray-scott" hoverFills={LOGO_FILLS} />}
       smallScreenNotice={
         <div className="flex flex-col gap-2 text-center max-w-xs">
