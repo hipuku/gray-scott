@@ -1,29 +1,18 @@
 # gray-scott
 
-Reaction-diffusion in the browser. Live at [gray-scott.hipuku.dev](https://gray-scott.hipuku.dev).
-
-A real-time simulation of the Gray-Scott model: two chemicals diffusing and reacting on a grid, producing spots, stripes, labyrinths, and self-replicating mitosis patterns from four numbers.
+Gray-Scott reaction-diffusion, simulated in real time in the browser. Live at [gray-scott.hipuku.dev](https://gray-scott.hipuku.dev).
 
 ## Tools
 
-**Simulate** runs the model live on a 512² grid. Adjust the four parameters (feed `f`, kill `k`, diffusion rates `Du`, `Dv`), load named presets, reseed, and pause. The activator field `V` is rendered through a perceptual OKLCH colour ramp.
+- **Simulate** the model live on a 512 x 512 grid, with presets and all four parameters.
+- **Channels** shows both chemical fields side by side, with a readout under the pointer.
+- **Parameter space** maps Pearson's pattern regions. Click one to load it.
 
-**Channels** shows the substrate `U` and activator `V` fields side by side. `U` is drawn as a contrast-matched photo-negative of `V`, and a cursor inspector reads the exact concentration of each field under the pointer. The two channels are one field shown two ways, with a correlation of about −0.995.
-
-**Parameter space** maps Pearson's classification of `(f, k)` space. Each labelled region (spots, stripes, labyrinth, mitosis, …) is clickable and loads its representative preset into the simulator.
-
-## Engineering
-
-The core is a from-scratch forward-Euler integrator of the Gray-Scott PDEs with a 5-point Laplacian on a toroidal grid. The simulation runs in a **Web Worker** (rendered frames posted back as transferable `ArrayBuffer`s, so 262k pixels/frame never touch the main thread), and the colour lookup tables are interpolated once in **OKLCH** space at build time so the per-pixel loop is a single array lookup.
-
-See [DESIGN.md](DESIGN.md) for the rationale behind these choices.
+The simulation runs in a Web Worker, and colour is interpolated in OKLCH.
 
 ## Stack
 
-- React 19 + TypeScript
-- Vite, Tailwind CSS v4, [kern](https://github.com/hipuku/kern) (shared component library)
-- Web Workers (off-thread simulation)
-- Parkinsans + Geist Mono (Google Fonts)
+React 19, TypeScript, Vite, Tailwind CSS v4, Web Workers, [kern](https://github.com/hipuku/kern).
 
 ## Development
 
@@ -32,8 +21,13 @@ npm install
 npm run dev
 ```
 
+`npm test`, `npm run lint` and `npm run typecheck` run the checks CI runs.
+
 ## References
 
-- Gray, P. & Scott, S.K. (1984). *Autocatalytic reactions in the isothermal, continuous stirred tank reactor.* Chemical Engineering Science 39(6).
-- Pearson, J.E. (1993). *Complex Patterns in a Simple System.* Science 261(5118), 189–192.
-- Ottosson, B. (2020). *Oklab colour space.*
+- Gray, P. and Scott, S.K. (1984). Autocatalytic reactions in the isothermal, continuous stirred tank reactor. *Chemical Engineering Science* 39(6).
+- Pearson, J.E. (1993). Complex patterns in a simple system. *Science* 261(5118), 189 to 192.
+
+## Licence
+
+MIT

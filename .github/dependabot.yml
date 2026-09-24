@@ -1,10 +1,6 @@
 # One of the three experiments consuming kern, and none of the three had a
-# dependency policy. gray-scott was carrying three high advisories unreported:
+# dependency policy. This repo was carrying three high advisories unreported:
 # the same gap kern itself had, for the same reason.
-#
-# Private repo. Dependabot for private repositories is already enabled on the
-# account, confirmed by this file opening pull requests the moment it landed, so
-# nothing further is needed in the repository's settings.
 #
 # Weekly and grouped, so a review is one pull request rather than nine.
 version: 2
@@ -26,6 +22,9 @@ updates:
       # or tailwind-merge change shows up in the same places.
       ui:
         patterns: ['class-variance-authority', 'clsx', 'tailwind-merge', 'tw-animate-css', 'lucide-react']
+      # The accessibility test layer, as kern groups it.
+      test:
+        patterns: ['vitest-axe', 'jsdom', '@testing-library/*']
       tooling:
         patterns: ['eslint*', '@eslint/*', 'typescript-eslint', 'globals']
     commit-message:

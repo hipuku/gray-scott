@@ -11,7 +11,7 @@ env:
 
 jobs:
   ci:
-    name: Lint, Test, Build
+    name: Lint, Typecheck, Test, Build
     runs-on: ubuntu-latest
 
     steps:
@@ -19,21 +19,29 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
 
-      - name: Authenticate private packages
+      # kern is pinned as GitHub source and the lockfile records it over SSH.
+      # kern is public, so plain HTTPS reaches it with no key and no token.
+      - name: Fetch GitHub dependencies over HTTPS
         run: |
-          git config --local --unset-all http.https://github.com/.extraheader || true
-          git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
-          git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "git@github.com:"
-          git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install dependencies
         run: npm ci
 
       - name: Lint
         run: npm run lint
+
+      # House style does not use an em dash. Ratcheted against a baseline, as in
+      # kern: new ones fail, and existing ones can only come down.
+      - name: Lint prose
+        run: npm run lint:prose
+
+      - name: Typecheck
+        run: npm run typecheck
 
       - name: Test
         run: npm test
@@ -52,15 +60,15 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
 
-      - name: Authenticate private packages
+      # kern is pinned as GitHub source and the lockfile records it over SSH.
+      # kern is public, so plain HTTPS reaches it with no key and no token.
+      - name: Fetch GitHub dependencies over HTTPS
         run: |
-          git config --local --unset-all http.https://github.com/.extraheader || true
-          git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
-          git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "git@github.com:"
-          git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Install dependencies
         run: npm ci

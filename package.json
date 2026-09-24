@@ -10,6 +10,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "lint:prose": "node scripts/check-punctuation.mjs",
+    "typecheck": "tsc -b",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -27,6 +29,9 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.0",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/node": "^24.13.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -35,10 +40,12 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.6",
     "globals": "^17.12.0",
+    "jsdom": "^30.1.1",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.69.0",
-    "vite": "^8.0.12",
-    "vitest": "^4.1.6"
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1",
+    "vitest-axe": "^0.1.0"
   }
 }
