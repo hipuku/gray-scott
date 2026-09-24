@@ -42,7 +42,7 @@ function doTick() {
   const pixels = new Uint8ClampedArray(GRID_SIZE * GRID_SIZE * 4)
   renderVToPixels(pixels, buffers[front])
 
-  // Transfer the underlying buffer — zero-copy handoff to the main thread.
+  // Transfer the underlying buffer: zero-copy handoff to the main thread.
   // The worker creates a fresh Uint8ClampedArray next tick.
   self.postMessage(
     { type: 'frame', buffer: pixels.buffer, width: GRID_SIZE, height: GRID_SIZE },

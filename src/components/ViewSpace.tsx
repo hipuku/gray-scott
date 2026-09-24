@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { CanvasStage, ViewContainer, ViewHeader } from 'kern'
+import { CanvasStage, ViewContainer, ViewHeader, focusRing } from 'kern'
 import { PatternGlyph } from '@/components/PatternGlyph'
 import { cn } from '@/lib/utils'
 import {
   PEARSON_REGIONS,
   F_MIN, F_MAX, K_MIN, K_MAX,
 } from '@/simulation/pearson'
+import { PRESETS } from '@/simulation/presets'
 
-// Named canvas colours — CSS variables don't resolve in a 2D canvas context.
+// Named canvas colours: CSS variables don't resolve in a 2D canvas context.
 // The map is on-palette: regions are uniform nebula, distinguished by their glyphs.
 const CANVAS_BG     = '#1F1F20'    // --color-void-10
 const CANVAS_TICK   = '#383839'    // --color-void-30
@@ -45,7 +46,22 @@ function regionRect(r: (typeof PEARSON_REGIONS)[number]) {
 
 interface Hover { xPct: number; yPct: number; f: number; k: number; regionId: string | null }
 
-export function ViewSpace() {
+// The preset each region's button runs. A region is a range, so its button
+// runs the named preset that sits inside it rather than an arbitrary centre.
+const REGION_PRESET: Record<string, string> = {
+  spots: 'leopard',
+  stripes: 'zebra',
+  labyrinth: 'labyrinth',
+  mitosis: 'mitosis',
+  worms: 'coral',
+}
+
+interface ViewSpaceProps {
+  /** Run a point of the plane in Simulate. */
+  onLoad?: (f: number, k: number) => void
+}
+
+export function ViewSpace({ onLoad }: ViewSpaceProps = {}) {
   const mapRef = useRef<HTMLCanvasElement>(null)
 
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null)
@@ -102,6 +118,22 @@ export function ViewSpace() {
     setHover({ xPct: (px / MAP_W) * 100, yPct: (py / MAP_H) * 100, f, k, regionId: region?.id ?? null })
   }
 
+  // A click runs the exact point under the pointer, rounded to the precision
+  // the sliders show, so what Simulate displays is what was clicked.
+  function handleClick(e: React.MouseEvent<HTMLCanvasElement>) {
+    if (!onLoad) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const px = ((e.clientX - rect.left) / rect.width)  * MAP_W
+    const py = ((e.clientY - rect.top)  / rect.height) * MAP_H
+    const { f, k } = fromCanvas(px, py)
+    onLoad(Math.round(f * 1000) / 1000, Math.round(k * 1000) / 1000)
+  }
+
+  function runRegion(regionId: string) {
+    const preset = PRESETS.find(p => p.id === REGION_PRESET[regionId])
+    if (preset) onLoad?.(preset.f, preset.k)
+  }
+
   function handleLeave() {
     setHoveredRegion(null)
     setHover(null)
@@ -115,10 +147,10 @@ export function ViewSpace() {
     <ViewContainer width="lg" gap="sm">
       <ViewHeader
         title="Parameter space"
-        description="The (f, k) plane mapped to Pearson's 1993 pattern classification. Each region is marked by its pattern glyph; hover to read the parameters at any point."
+        description="The (f, k) plane mapped to Pearson's 1993 pattern classification. Each region is marked by its pattern glyph. Hover to read the parameters at any point, and click to run it in Simulate."
       />
 
-      {/* ── Map — full width, glyphs + axes + inspector inside ── */}
+      {/* ── Map: full width, glyphs + axes + inspector inside ── */}
       <CanvasStage square={false} className="bg-void-10">
         <canvas
           ref={mapRef}
@@ -126,6 +158,10 @@ export function ViewSpace() {
           style={{ aspectRatio: `${MAP_W} / ${MAP_H}` }}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleLeave}
+          onClick={handleClick}
+          // The canvas is the pointer route. The region buttons below are the
+          // keyboard route, so the map itself stays out of the accessible tree.
+          aria-hidden="true"
         />
 
         {/* Hovered region highlight */}
@@ -136,20 +172,28 @@ export function ViewSpace() {
           />
         )}
 
-        {/* Region glyphs, at each region's centre */}
+        {/* Region glyphs, at each region's centre. Each is a button that runs
+            the region's preset: the keyboard route into Simulate. */}
         {PEARSON_REGIONS.map(r => {
           const c = toCanvas((r.fMin + r.fMax) / 2, (r.kMin + r.kMax) / 2)
           return (
-            <div
+            <button
               key={r.id}
+              type="button"
+              onClick={() => runRegion(r.id)}
+              onMouseEnter={() => setHoveredRegion(r.id)}
+              onMouseLeave={() => setHoveredRegion(null)}
+              aria-label={`Run ${r.label} in Simulate`}
+              title={`Run ${r.label} in Simulate`}
               className={cn(
-                'absolute -translate-x-1/2 -translate-y-1/2 text-nebula pointer-events-none transition-opacity duration-150',
+                'absolute -translate-x-1/2 -translate-y-1/2 p-1 rounded-md text-nebula cursor-pointer transition-opacity duration-150',
+                focusRing,
                 hoveredRegion && hoveredRegion !== r.id ? 'opacity-30' : 'opacity-100',
               )}
               style={{ left: `${(c.x / MAP_W) * 100}%`, top: `${(c.y / MAP_H) * 100}%` }}
             >
               <PatternGlyph id={r.id} className="w-5 h-5" />
-            </div>
+            </button>
           )
         })}
 
@@ -158,10 +202,10 @@ export function ViewSpace() {
           className="absolute left-2 top-1/2 type-annotation text-void-40 whitespace-nowrap pointer-events-none"
           style={{ writingMode: 'vertical-rl', transform: 'translateY(-50%) rotate(180deg)' }}
         >
-          f — feed rate →
+          feed rate f →
         </span>
         <span className="absolute bottom-2 right-3 type-annotation text-void-40 whitespace-nowrap pointer-events-none">
-          k — kill rate →
+          kill rate k →
         </span>
 
         {/* Hover crosshair */}
@@ -172,7 +216,7 @@ export function ViewSpace() {
           />
         )}
 
-        {/* Hover readout — top-left */}
+        {/* Hover readout: top-left */}
         {hover && (
           <div className="absolute top-2 left-2 pointer-events-none flex items-center gap-2 rounded-md px-2 py-1 bg-void-0/80 backdrop-blur-sm type-annotation font-mono">
             <span className="text-void-60">f {hover.f.toFixed(3)}</span>

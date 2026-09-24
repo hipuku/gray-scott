@@ -49,6 +49,23 @@ jobs:
       - name: Build
         run: npm run build
 
+      # The unit suite renders in jsdom, which has no layout and no colour, so
+      # contrast, focus visibility and the worker are only checked here, in a
+      # real browser against the production build.
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+
+      - name: End-to-end
+        run: npm run e2e
+
+      - name: Keep the trace when it fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
+
   deploy:
     name: Deploy to Cloudflare Pages
     runs-on: ubuntu-latest

@@ -22,6 +22,14 @@ const LOGO_FILLS = {
 
 export default function App() {
   const [activeView, setActiveView] = useState<ViewId>('about')
+  // A point chosen in Parameter space. `run` changes on every choice, so
+  // Simulate remounts and reseeds even when the same point is chosen twice.
+  const [start, setStart] = useState<{ f: number; k: number; run: number } | null>(null)
+
+  function runInSimulate(f: number, k: number) {
+    setStart(prev => ({ f, k, run: (prev?.run ?? 0) + 1 }))
+    setActiveView('simulate')
+  }
 
   return (
     <AppShell
@@ -36,15 +44,17 @@ export default function App() {
         <div className="flex flex-col gap-2 text-center max-w-xs">
           <p className="type-h4 text-ink-title">Patterns need room to grow</p>
           <p className="type-p-sm text-ink-body">
-            gray-scott is desktop-only for now — the reaction needs a bigger petri dish. Open it on a wider screen.
+            gray-scott is desktop-only for now: the reaction needs a bigger petri dish. Open it on a wider screen.
           </p>
         </div>
       }
     >
       {activeView === 'about'    && <ViewAbout    />}
-      {activeView === 'simulate' && <ViewSimulate />}
+      {activeView === 'simulate' && (
+        <ViewSimulate key={start?.run ?? 0} initialF={start?.f} initialK={start?.k} />
+      )}
       {activeView === 'isolate'  && <ViewIsolate  />}
-      {activeView === 'space'    && <ViewSpace    />}
+      {activeView === 'space'    && <ViewSpace onLoad={runInSimulate} />}
     </AppShell>
   )
 }

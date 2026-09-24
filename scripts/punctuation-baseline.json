@@ -1,10 +1,1 @@
-{
-  "src/App.tsx": 1,
-  "src/components/ViewAbout.tsx": 6,
-  "src/components/ViewIsolate.tsx": 3,
-  "src/components/ViewSimulate.tsx": 7,
-  "src/components/ViewSpace.tsx": 5,
-  "src/simulation/gray-scott.ts": 2,
-  "src/simulation/isolate.worker.ts": 1,
-  "src/simulation/simulation.worker.ts": 1
-}
+{}

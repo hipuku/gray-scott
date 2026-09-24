@@ -32,8 +32,12 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
 
   const [running, setRunning]           = useState(true)
   const [speed, setSpeed]               = useState<Speed>(1)
+  // A starting point from Parameter space keeps its preset chip lit when it
+  // is one of the presets, and lights none when it is an arbitrary point.
   const [activePreset, setActivePreset] = useState(
-    initialF !== undefined ? '' : PRESETS[0].id,
+    initialF === undefined
+      ? PRESETS[0].id
+      : PRESETS.find(p => p.f === initialF && p.k === initialK)?.id ?? '',
   )
   const [showAdvanced, setShowAdvanced] = useState(false)
 
@@ -105,7 +109,7 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
     const params: SimParams = { f, k, Du: du, Dv: dv }
     workerRef.current?.postMessage({ type: 'setParams', params })
     // Reseed on every param change so sliders give immediate visual feedback.
-    // Skip the first render — the worker seeds itself on init.
+    // Skip the first render: the worker seeds itself on init.
     if (paramsReady.current) {
       workerRef.current?.postMessage({ type: 'seed' })
     } else {
@@ -121,7 +125,7 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
     setActivePreset(id)
     setF(preset.f)
     setK(preset.k)
-    // No explicit seed — the params useEffect reseeds automatically on f/k change.
+    // No explicit seed: the params useEffect reseeds automatically on f/k change.
   }
 
   function handleReset() {
@@ -179,7 +183,7 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
           {/* f / k sliders + region */}
           <div className="flex flex-col gap-4">
             <ParamSlider
-              label="f — feed rate"
+              label="Feed rate (f)"
               value={f}
               min={0.01}
               max={0.08}
@@ -187,7 +191,7 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
               onChange={v => { setF(v); setActivePreset('') }}
             />
             <ParamSlider
-              label="k — kill rate"
+              label="Kill rate (k)"
               value={k}
               min={0.04}
               max={0.075}
@@ -202,7 +206,7 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
             </StatusChip>
           </div>
 
-          {/* Advanced — Du / Dv */}
+          {/* Advanced: Du / Dv */}
           <div className="flex flex-col">
             <div className="h-px bg-void-20" />
             <button
@@ -232,7 +236,7 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
               <div className="overflow-hidden">
                 <div className="flex flex-col gap-4 pb-3">
                   <ParamSlider
-                    label="Du — substrate"
+                    label="Substrate diffusion (Du)"
                     value={du}
                     min={0.05}
                     max={0.50}
@@ -240,7 +244,7 @@ export function ViewSimulate({ initialF, initialK }: ViewSimulateProps = {}) {
                     onChange={setDu}
                   />
                   <ParamSlider
-                    label="Dv — activator"
+                    label="Activator diffusion (Dv)"
                     value={dv}
                     min={0.025}
                     max={0.25}

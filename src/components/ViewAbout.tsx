@@ -47,7 +47,7 @@ export function ViewAbout() {
       <Section title="Implementation">
         <BulletList>
           <BulletItem>
-            The simulation runs on a <strong className="text-void-80 font-semibold">512 × 512 grid</strong> — 262,144 pixels updated every frame — using two interleaved{' '}
+            The simulation runs on a <strong className="text-void-80 font-semibold">512 × 512 grid</strong> (262,144 pixels updated every frame), using two interleaved{' '}
             <InlineCode colour="neutral">Float32Array</InlineCode> ping-pong buffers. One buffer
             is read, the other is written, then they swap.
           </BulletItem>
@@ -62,14 +62,14 @@ export function ViewAbout() {
             D<sub>v</sub> = 0.1050 (from Pearson 1993).
           </BulletItem>
           <BulletItem>
-            Each frame is rendered in a <strong className="text-void-80 font-semibold">Web Worker</strong> — the
+            Each frame is rendered in a <strong className="text-void-80 font-semibold">Web Worker</strong>: the
             simulation step and colour mapping run entirely off the main thread. The worker posts back a transferable{' '}
             <InlineCode colour="neutral">ArrayBuffer</InlineCode>; the main thread wraps it in{' '}
             <InlineCode colour="neutral">ImageData</InlineCode> and commits to canvas via{' '}
             <InlineCode colour="neutral">putImageData</InlineCode>, keeping the UI thread free at all speeds.
           </BulletItem>
           <BulletItem>
-            Colour mapping uses <strong className="text-void-80 font-semibold">OKLCH interpolation</strong> — a
+            Colour mapping uses <strong className="text-void-80 font-semibold">OKLCH interpolation</strong>, a
             perceptually uniform path from void-0 (near-black) to nebula green. A 256-entry lookup table is precomputed at module
             load so the per-pixel render is a single array read, not a float calculation.
           </BulletItem>
@@ -79,7 +79,7 @@ export function ViewAbout() {
       {/* ── The two chemicals ── */}
       <Section title="The two chemicals: U and V">
         <p className="type-p-sm text-void-60">
-          What the Simulate view displays is entirely the V concentration — the activator. U, the substrate,
+          What the Simulate view displays is entirely the V concentration, the activator. U, the substrate,
           is its approximate inverse: where V is high (bright), U has been consumed (dark), and vice versa.
         </p>
         <BulletList>
@@ -90,7 +90,7 @@ export function ViewAbout() {
           </BulletItem>
           <BulletItem>
             <InlineCode colour="supernova">V</InlineCode> begins near zero and is produced wherever U is
-            present. It diffuses more slowly than U (D<sub>v</sub> ≈ 0.5 × D<sub>u</sub>) — this slower
+            present. It diffuses more slowly than U (D<sub>v</sub> ≈ 0.5 × D<sub>u</sub>), and this slower
             spread is what creates the spatial instability. If V diffused as fast as U, the system would
             equilibrate uniformly and no pattern would form.
           </BulletItem>

@@ -1,7 +1,7 @@
 // Isolate worker: runs one Gray-Scott simulation and posts back the raw U
 // (substrate) and V (activator) concentration fields each frame. ViewIsolate
 // renders both channels on the main thread so it can also read the concentration
-// under the cursor for the inspector — the sim step still runs off-thread here.
+// under the cursor for the inspector: the sim step still runs off-thread here.
 //
 // Message protocol (main → worker):
 //   { type: 'seed' }                       reseed, then post a frame

@@ -160,7 +160,7 @@ export function ViewIsolate() {
     <ViewContainer width="lg">
       <ViewHeader
         title="Isolate channels"
-        description="The same simulation shown twice — left channel U (the substrate), right channel V (the activator). They are coupled but move in opposite directions. Pause and hover either canvas to read both concentrations at a point."
+        description="The same simulation shown twice: left channel U (the substrate), right channel V (the activator). They are coupled but move in opposite directions. Pause and hover either canvas to read both concentrations at a point."
       />
 
       {/* ── Controls: preset + transport ── */}
@@ -213,12 +213,12 @@ export function ViewIsolate() {
 
         <div className="grid grid-cols-2 gap-4">
           <CalloutCard colour="nebula" label="U is the substrate">
-            U starts at 1 everywhere (full concentration) — the bright field. Where V is present,
+            U starts at 1 everywhere (full concentration), the bright field. Where V is present,
             U is consumed, carving out the dark holes.
           </CalloutCard>
           <CalloutCard colour="supernova" label="V is the activator">
             V begins near zero and is produced where U is present. The pattern you see in Simulate
-            is entirely the V concentration — U is its inverse.
+            is entirely the V concentration. U is its inverse.
           </CalloutCard>
         </div>
       </div>

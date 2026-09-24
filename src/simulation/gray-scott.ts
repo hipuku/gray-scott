@@ -88,7 +88,7 @@ function buildLut(fromHex: string, toHex: string): Uint8Array {
   const [L0, C0, H0raw] = hexToOklch(fromHex)
   const [L1, C1, H1raw] = hexToOklch(toHex)
 
-  // An achromatic endpoint (near-black/grey) has no meaningful hue — atan2 of a
+  // An achromatic endpoint (near-black/grey) has no meaningful hue: atan2 of a
   // near-zero a/b pair returns an arbitrary angle (e.g. void-0 reads as ~blue).
   // Interpolating toward it drags the ramp through off-palette hues, which is
   // why the void→nebula ramp used to show navy midtones. Anchor the achromatic
@@ -208,7 +208,7 @@ export function step(
 // consumes it, so drawn straight it reads as a flat mid-green and its inverse
 // relationship to V is invisible. Stretch the band [U_BLACK, 1] across the full
 // ramp: depleted regions (where V's structure lives) fall to black, replenished
-// regions stay bright — making U a true photo-negative of V, contrast-matched to
+// regions stay bright, making U a true photo-negative of V, contrast-matched to
 // V's ×3 amplification.
 const U_BLACK = 0.5
 

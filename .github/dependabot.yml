@@ -24,7 +24,7 @@ updates:
         patterns: ['class-variance-authority', 'clsx', 'tailwind-merge', 'tw-animate-css', 'lucide-react']
       # The accessibility test layer, as kern groups it.
       test:
-        patterns: ['vitest-axe', 'jsdom', '@testing-library/*']
+        patterns: ['vitest-axe', 'jsdom', '@testing-library/*', '@playwright/test', '@axe-core/*']
       tooling:
         patterns: ['eslint*', '@eslint/*', 'typescript-eslint', 'globals']
     commit-message:
