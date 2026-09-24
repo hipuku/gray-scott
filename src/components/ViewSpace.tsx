@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils'
 import {
   PEARSON_REGIONS,
   F_MIN, F_MAX, K_MIN, K_MAX,
+  classifyRegion,
+  type PearsonRegion,
 } from '@/simulation/pearson'
 import { PRESETS } from '@/simulation/presets'
 
@@ -45,16 +47,6 @@ function regionRect(r: (typeof PEARSON_REGIONS)[number]) {
 }
 
 interface Hover { xPct: number; yPct: number; f: number; k: number; regionId: string | null }
-
-// The preset each region's button runs. A region is a range, so its button
-// runs the named preset that sits inside it rather than an arbitrary centre.
-const REGION_PRESET: Record<string, string> = {
-  spots: 'leopard',
-  stripes: 'zebra',
-  labyrinth: 'labyrinth',
-  mitosis: 'mitosis',
-  worms: 'coral',
-}
 
 interface ViewSpaceProps {
   /** Run a point of the plane in Simulate. */
@@ -111,9 +103,7 @@ export function ViewSpace({ onLoad }: ViewSpaceProps = {}) {
     const px = ((e.clientX - rect.left) / rect.width)  * MAP_W
     const py = ((e.clientY - rect.top)  / rect.height) * MAP_H
     const { f, k } = fromCanvas(px, py)
-    const region = PEARSON_REGIONS.find(r =>
-      f >= r.fMin && f <= r.fMax && k >= r.kMin && k <= r.kMax
-    )
+    const region = classifyRegion(f, k)
     setHoveredRegion(region?.id ?? null)
     setHover({ xPct: (px / MAP_W) * 100, yPct: (py / MAP_H) * 100, f, k, regionId: region?.id ?? null })
   }
@@ -129,8 +119,10 @@ export function ViewSpace({ onLoad }: ViewSpaceProps = {}) {
     onLoad(Math.round(f * 1000) / 1000, Math.round(k * 1000) / 1000)
   }
 
-  function runRegion(regionId: string) {
-    const preset = PRESETS.find(p => p.id === REGION_PRESET[regionId])
+  // A region is a range, so its button runs the named preset inside it
+  // rather than an arbitrary centre.
+  function runRegion(region: PearsonRegion) {
+    const preset = PRESETS.find(p => p.id === region.preset)
     if (preset) onLoad?.(preset.f, preset.k)
   }
 
@@ -180,7 +172,7 @@ export function ViewSpace({ onLoad }: ViewSpaceProps = {}) {
             <button
               key={r.id}
               type="button"
-              onClick={() => runRegion(r.id)}
+              onClick={() => runRegion(r)}
               onMouseEnter={() => setHoveredRegion(r.id)}
               onMouseLeave={() => setHoveredRegion(null)}
               aria-label={`Run ${r.label} in Simulate`}

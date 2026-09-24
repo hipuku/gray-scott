@@ -3,7 +3,7 @@ import {
   createBuffers, seed, step, renderVToPixels, renderU,
   DEFAULT_PARAMS,
 } from './gray-scott'
-import { classifyRegion } from './pearson'
+import { PEARSON_REGIONS, classifyRegion } from './pearson'
 import { PRESETS } from './presets'
 
 // renderU reads `imageData.data`, so a bare buffer stands in for the DOM
@@ -104,10 +104,20 @@ describe('classifyRegion', () => {
     expect(classifyRegion(0.005, 0.04)).toBeNull()
   })
 
-  it('returns a stable region-or-null for every preset', () => {
-    for (const p of PRESETS) {
-      const region = classifyRegion(p.f, p.k)
-      if (region) expect(typeof region.id).toBe('string')
+  // Pearson's regions overlap, so this is the case that matters: every preset
+  // must be classified as the region whose button runs it. The test this
+  // replaces only asked for some region or null, and passed while the Mitosis
+  // preset was labelled Spots.
+  it('classifies every preset as the region that runs it', () => {
+    for (const region of PEARSON_REGIONS) {
+      const preset = PRESETS.find(p => p.id === region.preset)
+      expect(preset, `${region.id} names a preset that exists`).toBeDefined()
+      expect(classifyRegion(preset!.f, preset!.k)?.id, preset!.id).toBe(region.id)
     }
+  })
+
+  it('gives a point inside two regions to the one whose centre is nearer', () => {
+    // (0.028, 0.062) lies in both the Spots and Mitosis boxes.
+    expect(classifyRegion(0.028, 0.062)?.id).toBe('mitosis')
   })
 })
