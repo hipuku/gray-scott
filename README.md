@@ -6,7 +6,7 @@ Gray-Scott reaction-diffusion, simulated in real time in the browser. Live at [g
 
 - **Simulate** the model live on a 512 x 512 grid, with presets and all four parameters.
 - **Channels** shows both chemical fields side by side, with a readout under the pointer.
-- **Parameter space** maps Pearson's pattern regions. Hover to read (f, k) and the pattern at any point.
+- **Parameter space** maps Pearson's pattern regions. Hover to read (f, k) and the pattern at any point, and click to run it.
 
 The simulation runs in a Web Worker, and colour is interpolated in OKLCH.
 
