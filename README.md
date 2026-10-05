@@ -1,5 +1,7 @@
 # gray-scott
 
+![gray-scott: the Labyrinth preset running at 60fps, with feed and kill rate controls alongside](docs/screenshot.png)
+
 Gray-Scott reaction-diffusion, simulated in real time in the browser. Live at [gray-scott.hipuku.dev](https://gray-scott.hipuku.dev).
 
 ## Tools
