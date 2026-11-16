@@ -6,6 +6,8 @@
 version: 2
 updates:
   - package-ecosystem: npm
+    # Without this Dependabot adds its own dependencies and javascript labels instead.
+    labels: ['deps']
     directory: /
     schedule:
       interval: weekly
@@ -46,6 +48,8 @@ updates:
         update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
+    # Without this Dependabot adds its own dependencies and javascript labels instead.
+    labels: ['deps']
     directory: /
     schedule:
       interval: monthly
